@@ -69,13 +69,13 @@ a1,a2,a3,a4 = -0.174533,0.174533,0.174533,-0.174533
 
 lx,ly=0,0
 
-kpx = 0.0158
-kix = 0.000
-kdx = 0.0805
+kpx = 0.040
+kix = 0.00006
+kdx = 0.130
 
-kpy = 0.0158
-kiy = 0.000
-kdy = 0.0805
+kpy = 0.040
+kiy = 0.00006
+kdy = 0.130
 
 previous_error_x=0
 previous_error_y=0

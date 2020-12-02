@@ -181,29 +181,17 @@ def get_vision_sensor_image(vision_sensor_handle):
 	vision_sensor_image = []
 	image_resolution = []
 	return_code = 0
-	# print(vision_sensor_handle)
 	##############	ADD YOUR CODE HERE	##############
-	# return_code, vs = sim.simxGetObjectHandle(client_id, "vision_sensor_1", sim.simx_opmode_oneshot_wait)
-	# return_code, image_resolution, vision_sensor_image = sim.simxGetVisionSensorImage(client_id, vision_sensor_handle,0,sim.simx_opmode_buffer)
 	return_code,image_resolution,vision_sensor_image=sim.simxGetVisionSensorImage(client_id,vision_sensor_handle,1,sim.simx_opmode_streaming)
 	while(sim.simxGetConnectionId(client_id)!=-1): 
 		return_code,image_resolution,vision_sensor_image=sim.simxGetVisionSensorImage(client_id,vision_sensor_handle,1,sim.simx_opmode_buffer)
 		if return_code == sim.simx_return_ok: 
-			# print ("image OK!!!") 
 			break
-			# img = np.array(vision_sensor_image,dtype=np.uint8) 
-			# img.resize([image_resolution[1],image_resolution[0],3]) 
-			# flipVertical = cv2.flip(img, 0)
-			# cv2.imshow('image',flipVertical) 
 
 			if cv2.waitKey(1) & 0xFF == ord('q'): 
 				break 
 		elif return_code == sim.simx_return_novalue_flag: 
-			# print ("no image yet") 
 			pass
-        # else: 
-		# 	print(return_code) 
-	# print(return_code)
 	##################################################
 
 	return vision_sensor_image, image_resolution, return_code
@@ -244,21 +232,14 @@ def transform_vision_sensor_image(vision_sensor_image, image_resolution):
 	transformed_image = None
 
 	##############	ADD YOUR CODE HERE	##############
-	# print('welcome')
 	img = np.array(vision_sensor_image, dtype = np.uint8)
-	# print(image_resolution)
 	img = img.reshape([image_resolution[1],image_resolution[0],1])	
 	img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 	flipVertical = cv2.flip(img, 0)
-	# cv2.imshow('image',img)
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
+
 	
 
 	transformed_image = flipVertical
-	# cv2.imshow('transformed image', transformed_image)
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
 	##################################################
 	return transformed_image
 

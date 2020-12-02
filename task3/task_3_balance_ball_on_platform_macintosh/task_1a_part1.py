@@ -78,7 +78,7 @@ def scan_image(img_file_path):
     ---
     shapes = scan_image(img_file_path)
     """
-    # print(img_file_path,'img')
+
     global shapes
     shapes = {}
     shapes['Circle'] = []
@@ -88,10 +88,8 @@ def scan_image(img_file_path):
     cx,cy=0,0
     color = None
     i = 0
-    # print(len(contours))
     if(len(contours)<2):
         shapes['Circle'] = [color,cx,cy]
-        # print('nope')
     for cnt in contours[1::]:
         cx,cy=0,0
         color = None
@@ -118,12 +116,10 @@ def scan_image(img_file_path):
             color = None
 
         approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-        # print(len(approx))
         if len(approx) > 8:
             shapes['Circle'] = [color,cx,cy]
         else:
             shapes['Circle'] = [None,0,0]
-    # print(shapes)
     return shapes
 
 

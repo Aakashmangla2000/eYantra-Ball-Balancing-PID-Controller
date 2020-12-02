@@ -17,13 +17,13 @@
 *****************************************************************************************
 '''
 
-# Team ID:          [ Team-ID ]
-# Author List:      [ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:          [ NB_534 ]
+# Author List:      [ Aakash Mangla ]
 # Filename:         task_3.py
 # Functions:        init_setup(rec_client_id), control_logic(center_x,center_y), change_setpoint(new_setpoint)
 #                   [ Comma separated list of functions in this file ]
 # Global variables: client_id, setpoint=[]
-# 					[ List of global variables defined in this file ]
+# 					[ timenow,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_previous, lastInput_x,lastInput_y, ITerm_x,ITerm_y,f]
 
 
 ####################### IMPORT MODULES #########################
@@ -64,18 +64,16 @@ vision_sensor_handle = 0
 
 # You can add your global variables here
 ##############################################################
-rj1,rj2,rj3,rj4 = 0,0,0,0
-a1,a2,a3,a4 = -0.174533,0.174533,0.174533,-0.174533
+rj1,rj2 = 0,0
 
-lx,ly=0,0
 
 kpx = 0.050
 kix = 0.0
-kdx = 0.115
+kdx = 0.125
 
 kpy = 0.050
 kiy = 0.0
-kdy = 0.115
+kdy = 0.125
 
 previous_error_x=0
 previous_error_y=0
@@ -130,17 +128,14 @@ def init_setup(rec_client_id):
 	init_setup()
 	
 	"""
-	global client_id, vision_sensor_handle, rj1,rj2,rj3,rj4
+	global client_id, vision_sensor_handle, rj1,rj2
 	# since client_id is defined in task_2a.py file, it needs to be assigned here as well.
 	client_id = rec_client_id
 	##############	ADD YOUR CODE HERE	##############
 	return_code, vision_sensor_handle = sim.simxGetObjectHandle(client_id, "vision_sensor_1", sim.simx_opmode_oneshot_wait)
-	return_code, rj1 = sim.simxGetObjectHandle(client_id, "Revolute_joint_1", sim.simx_opmode_oneshot_wait)
-	return_code, rj2 = sim.simxGetObjectHandle(client_id, "Revolute_joint_2", sim.simx_opmode_oneshot_wait)
-	return_code, rj3 = sim.simxGetObjectHandle(client_id, "Revolute_joint_3", sim.simx_opmode_oneshot_wait)
-	return_code, rj4 = sim.simxGetObjectHandle(client_id, "Revolute_joint_4", sim.simx_opmode_oneshot_wait)
+	return_code, rj1 = sim.simxGetObjectHandle(client_id, "revolute_joint_ss_1", sim.simx_opmode_oneshot_wait)
+	return_code, rj2 = sim.simxGetObjectHandle(client_id, "revolute_joint_ss_2", sim.simx_opmode_oneshot_wait)
 
-	# print(rj1,rj2,rj3,rj4)
 	
 	##################################################
 
@@ -186,34 +181,37 @@ def control_logic(center_x,center_y):
 	control_logic(center_x,center_y)
 	
 	"""
-	global set_point, client_id, lx,ly,	a1,a2,a3,a4
+	global set_point, client_id
 	global timenow,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_previous, lastInput_x,lastInput_y
 	global ITerm_x,ITerm_y,f
 
-	# outMax = 360
-	# outMin = -360
-
+	fix_error_x = 0
+	fix_error_y = 0
 	# ##############	ADD YOUR CODE HERE	##############
 
 	if(set_point[0]-640 > 0 and set_point[1]-640 > 0): 
-		set_point[0] -= 2
-		set_point[1] -= 2
-	elif(set_point[0]-640 < 0 and set_point[1]-640 > 0): 
-		set_point[0] += 2.5
-		set_point[1] -= 2.5
-	elif(set_point[0]-640 > 0 and set_point[1]-640 < 0): 
-		set_point[0] -= 2
-		set_point[1] += 2
-	elif(set_point[0]-640 < 0 and set_point[1]-640 < 0): 
-		set_point[0] += 3
-		set_point[1] += 3
+		fix_error_x = -(-((261*(1043-set_point[0]))/1070368)+0.198)*(set_point[0]-640)
+		fix_error_y = -(-((261*(1043-set_point[1]))/1070368)+0.198)*(set_point[1]-640)
 
+	elif(set_point[0]-640 < 0 and set_point[1]-640 > 0): 
+		fix_error_x = ((((200-set_point[0]))/16896)-0.227)*(set_point[0]-640)
+		fix_error_y = -(-((57*(-1046+set_point[1]))/159616)+0.172)*(set_point[1]-640)
+
+	elif(set_point[0]-640 > 0 and set_point[1]-640 < 0): 
+		fix_error_x = -(((31*(-1046+set_point[0]))/279328)+0.197)*(set_point[0]-640)
+		fix_error_y = (-((7*(-200+set_point[1]))/52800)-0.209)*(set_point[1]-640)
+
+	elif(set_point[0]-640 < 0 and set_point[1]-640 < 0): 
+		fix_error_x = (((320-set_point[0])/5280)-0.25)*(set_point[0]-640)
+		fix_error_y = (((320-set_point[1])/5280)-0.25)*(set_point[1]-640)
+
+	#time calculation
 	timenow=time.time()
 	elapsedTime=timenow-time_previous
 	time_previous=timenow
 
 	#PID calcuation
-	error_x=(set_point[0]-center_x)
+	error_x=(set_point[0]-center_x+fix_error_x)
 	#Proportional
 	pid_p_x=kpx*error_x
 	
@@ -232,7 +230,7 @@ def control_logic(center_x,center_y):
 	# servo_signal_x=90+PID_x
 
 	#PID calcuation
-	error_y=(set_point[1]-center_y)
+	error_y=(set_point[1]-center_y+fix_error_y)
 
 	#Proportional
 	pid_p_y=kpy*error_y
@@ -245,49 +243,18 @@ def control_logic(center_x,center_y):
 	#Derivative
 	pid_d_y=kdy*((center_y-lastInput_y)/elapsedTime)
 
-	# print(pid_d,'pid')
 	previous_error_y=error_y
 	lastInput_y = center_y
 	PID_y = pid_p_y + pid_i_y - pid_d_y - 2.5
 
-	# servo_signal_y=90+PID_y
-
-	# print(PID_x,PID_y)
 
 	pi=22/7
 
 	PID_x = PID_x*(pi/180) 
 	PID_y = PID_y*(pi/180)
-	
-	# if PID_x > 0: 
-	# 	if PID_x > pi: 
-	# 		PID_x = PID_x - 2*pi
-	# else: 
-	# 	if PID_x < -pi: 
-	# 		PID_x = PID_x + 2*pi
-
-	# if PID_y > 0: 
-	# 	if PID_y > pi: 
-	# 		PID_y = PID_y - 2*pi
-	# else: 
-	# 	if PID_y < -pi: 
-	# 		PID_y = PID_y + 2*pi
-
-	
-
-	# print(PID_x*(180/pi),PID_y*(180/pi))
-	# print(center_x,center_y)
-	# print('time', elapsedTime)
-	# print(center_x,center_y)
-	# print(set_point)
-	
  
 	return_code = sim.simxSetJointTargetPosition(client_id, rj1,-PID_x,sim.simx_opmode_oneshot)
 	return_code = sim.simxSetJointTargetPosition(client_id, rj2,-PID_y,sim.simx_opmode_oneshot)
-
-	# return_code = sim.simxSetJointTargetPosition(client_id, rj1,-radian_x,sim.simx_opmode_oneshot)
-	# return_code = sim.simxSetJointTargetPosition(client_id, rj4,-radian_y,sim.simx_opmode_oneshot)
-
 
 	##################################################
 
