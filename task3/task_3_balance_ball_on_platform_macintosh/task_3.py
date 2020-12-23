@@ -23,7 +23,7 @@
 # Functions:        init_setup(rec_client_id), control_logic(center_x,center_y), change_setpoint(new_setpoint)
 #                   [ Comma separated list of functions in this file ]
 # Global variables: client_id, setpoint=[]
-# 					[ timenow,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_previous, lastInput_x,lastInput_y, ITerm_x,ITerm_y,f]
+# 					[ time_new,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_prev, lastInput_x,lastInput_y, ITerm_x,ITerm_y,f]
 
 
 ####################### IMPORT MODULES #########################
@@ -56,7 +56,7 @@ client_id = -1
 # Global list "setpoint" for storing target position of ball on the platform/top plate
 # The zeroth element stores the x pixel and 1st element stores the y pixel
 # NOTE: DO NOT change the value of this "setpoint" list
-set_point = [640,640]
+setpoint = [1043,1043]
 
 # Global variable "vision_sensor_handle" to store handle for Vision Sensor
 # NOTE: DO NOT change the value of this "vision_sensor_handle" variable here
@@ -66,21 +66,20 @@ vision_sensor_handle = 0
 ##############################################################
 rj1,rj2 = 0,0
 
-
-kpx = 0.050
+kpx = 0.055
 kix = 0.0
-kdx = 0.125
+kdx = 0.115
 
-kpy = 0.050
+kpy = 0.055
 kiy = 0.0
-kdy = 0.125
+kdy = 0.115
 
 previous_error_x=0
 previous_error_y=0
-timenow=0
+time_new=0
 pid_i_x=0
 pid_i_y=0
-time_previous = 0
+time_prev = 0
 sum_err_x = 0
 sum_err_y = 0
 lastInput_x = 0
@@ -88,6 +87,8 @@ lastInput_y = 0
 ITerm_x = 0
 ITerm_y = 0
 f = 0
+
+
 ##############################################################
 
 
@@ -112,7 +113,7 @@ def init_setup(rec_client_id):
 	
 	1. Get all the required handles from the CoppeliaSim scene and store them in global variables.
 	2. Initialize the vision sensor in 'simx_opmode_streaming' operation mode (if required). 
-	   Teams are allowed to choose the appropriate the operation mode depending on their code and logic.
+	   Teams are allowed to choose the appropriate the oeration mode depending on their code and logic.
 
 	Input Arguments:
 	---
@@ -181,80 +182,102 @@ def control_logic(center_x,center_y):
 	control_logic(center_x,center_y)
 	
 	"""
-	global set_point, client_id
-	global timenow,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_previous, lastInput_x,lastInput_y
+	global setpoint, client_id
+	global time_new,previous_error_x,previous_error_y,pid_i_x,pid_i_y,sum_err_x,sum_err_y,time_prev, lastInput_x,lastInput_y
 	global ITerm_x,ITerm_y,f
 
+	##############	ADD YOUR CODE HERE	##############
 	fix_error_x = 0
 	fix_error_y = 0
-	# ##############	ADD YOUR CODE HERE	##############
 
-	if(set_point[0]-640 > 0 and set_point[1]-640 > 0): 
-		fix_error_x = -(-((261*(1043-set_point[0]))/1070368)+0.198)*(set_point[0]-640)
-		fix_error_y = -(-((261*(1043-set_point[1]))/1070368)+0.198)*(set_point[1]-640)
 
-	elif(set_point[0]-640 < 0 and set_point[1]-640 > 0): 
-		fix_error_x = ((((200-set_point[0]))/16896)-0.227)*(set_point[0]-640)
-		fix_error_y = -(-((57*(-1046+set_point[1]))/159616)+0.172)*(set_point[1]-640)
+	if(setpoint[0]-640 > 0 and setpoint[1]-640 > 0): 
+		# fix_error_x = -(-((261*(1043-setpoint[0]))/1070368)+0.198)*(setpoint[0]-640)
+		# fix_error_x = -40
+		fix_error_x = -((((-setpoint[0]+900)/18671796)-(3/230516))*(setpoint[0]-1043)+(100/403))*(setpoint[0]-640)
+		# fix_error_y = -(-((261*(1043-setpoint[1]))/1070368)+0.198)*(setpoint[1]-640)
+		# fix_error_y = -40
+		fix_error_y = -(((2359*(-setpoint[1]+900)/3111966000)-(49/576290))*(setpoint[1]-1043)+(85/403))*(setpoint[1]-640)
 
-	elif(set_point[0]-640 > 0 and set_point[1]-640 < 0): 
-		fix_error_x = -(((31*(-1046+set_point[0]))/279328)+0.197)*(set_point[0]-640)
-		fix_error_y = (-((7*(-200+set_point[1]))/52800)-0.209)*(set_point[1]-640)
+	elif(setpoint[0]-640 < 0 and setpoint[1]-640 > 0): 
+		# fix_error_x = ((((200-setpoint[0]))/16896)-0.227)*(setpoint[0]-640)
+		# fix_error_x = 60
+		fix_error_x = (640-setpoint[0])/4
+		# fix_error_y = -(-((57*(-1046+setpoint[1]))/159616)+0.172)*(setpoint[1]-640)
+		# fix_error_y = -35
+		fix_error_y = -((-(389*(setpoint[1]-900)/4979145600)-(21/230516))*(setpoint[1]-1043)+(85/403))*(setpoint[1]-640)
 
-	elif(set_point[0]-640 < 0 and set_point[1]-640 < 0): 
-		fix_error_x = (((320-set_point[0])/5280)-0.25)*(set_point[0]-640)
-		fix_error_y = (((320-set_point[1])/5280)-0.25)*(set_point[1]-640)
+	elif(setpoint[0]-640 > 0 and setpoint[1]-640 < 0): 
+		# fix_error_x = -(((31*(-1046+setpoint[0]))/279328)+0.197)*(setpoint[0]-640)
+		# fix_error_x = -40
+		fix_error_x = ((-(23*(setpoint[0]-900)/56015388)-(23/230516))*(setpoint[0]-1043)-(95/403))*(setpoint[0]-640)
+		# fix_error_y = (-((7*(-200+setpoint[1]))/52800)-0.209)*(setpoint[1]-640)
+		# fix_error_y = 50
+		fix_error_y = (((19*(setpoint[1]-300)/22440000)-(7/149600))*(setpoint[1]-200)-(19/88))*(setpoint[1]-640)
+		# print(fix_error_x,fix_error_y)
 
-	#time calculation
-	timenow=time.time()
-	elapsedTime=timenow-time_previous
-	time_previous=timenow
+
+
+
+	elif(setpoint[0]-640 < 0 and setpoint[1]-640 < 0): 
+		# fix_error_x = (((320-setpoint[0])/5280)-0.25)*(setpoint[0]-640)
+		# fix_error_x = 60
+		fix_error_x = (((37*(setpoint[0]-200)/142560000)-(1/47520))*(setpoint[0]-100)-(7/27))*(setpoint[0]-640)
+		# fix_error_y = (((320-setpoint[1])/5280)-0.25)*(setpoint[1]-640)
+		# fix_error_y = 50
+		fix_error_y = ((((setpoint[1]-200)/4455000)-(7/237600))*(setpoint[1]-100)-(23/108))*(setpoint[1]-640)
+
+
+	#time
+	time_new=time.time()
+	total_time=time_new-time_prev
+	time_prev=time_new
 
 	#PID calcuation
-	error_x=(set_point[0]-center_x+fix_error_x)
+	error_x=(setpoint[0]-center_x+fix_error_x)
 	#Proportional
 	pid_p_x=kpx*error_x
 	
 	#Integral
 	sum_err_x += error_x
-	pid_i_x = (kix*sum_err_x*elapsedTime)
+	pid_i_x = (kix*sum_err_x*total_time)
 
 	#Derivative
-	pid_d_x=kdx*((center_x-lastInput_x)/elapsedTime)
+	pid_d_x=kdx*((center_x-lastInput_x)/total_time)
 
-	# print(pid_d,'pid')
 	previous_error_x=error_x
 	lastInput_x = center_x
-	PID_x = pid_p_x + pid_i_x - pid_d_x - 2.5
+	PID_value_x = pid_p_x + pid_i_x - pid_d_x - 2
 
-	# servo_signal_x=90+PID_x
 
 	#PID calcuation
-	error_y=(set_point[1]-center_y+fix_error_y)
+	error_y=(setpoint[1]-center_y+fix_error_y)
 
 	#Proportional
 	pid_p_y=kpy*error_y
 
 	#Integral
 	sum_err_y += error_y
-	pid_i_y = (kiy*sum_err_y*elapsedTime)
+	pid_i_y = (kiy*sum_err_y*total_time)
 
 
 	#Derivative
-	pid_d_y=kdy*((center_y-lastInput_y)/elapsedTime)
+	pid_d_y=kdy*((center_y-lastInput_y)/total_time)
 
 	previous_error_y=error_y
 	lastInput_y = center_y
-	PID_y = pid_p_y + pid_i_y - pid_d_y - 2.5
+	PID_value_y = pid_p_y + pid_i_y - pid_d_y - 2
 
 
 	pi=22/7
 
-	PID_x = PID_x*(pi/180) 
-	PID_y = PID_y*(pi/180)
+	PID_value_x = PID_value_x*(pi/180) 
+	PID_value_y = PID_value_y*(pi/180)
  
-	return_code = sim.simxSetJointTargetPosition(client_id, rj1,-PID_x,sim.simx_opmode_oneshot)
-	return_code = sim.simxSetJointTargetPosition(client_id, rj2,-PID_y,sim.simx_opmode_oneshot)
+	return_code = sim.simxSetJointTargetPosition(client_id, rj1,-PID_value_x,sim.simx_opmode_oneshot)
+	return_code = sim.simxSetJointTargetPosition(client_id, rj2,-PID_value_y,sim.simx_opmode_oneshot)
+
+	
 
 	##################################################
 
@@ -269,8 +292,9 @@ def control_logic(center_x,center_y):
 #					This will be ONLY called by executable file. 
 def change_setpoint(new_setpoint):
 
-	global set_point
-	set_point=new_setpoint[:]
+	global setpoint
+	setpoint=new_setpoint[:]
+
 
 # NOTE:	YOU ARE NOT ALLOWED TO MAKE ANY CHANGE TO THIS FUNCTION
 # 
