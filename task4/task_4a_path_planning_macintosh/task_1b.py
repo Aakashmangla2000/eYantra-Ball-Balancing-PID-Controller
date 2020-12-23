@@ -90,13 +90,15 @@ def applyPerspectiveTransform(input_img):
 	# Converting image to a binary image 
 	# ( black and white only image). 
 	_, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY) 
+	th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,199,5)
 	kernel = np.ones((5,5),np.uint8)
-	erosion = cv2.erode(threshold,kernel,iterations = 2)
-	dilation = cv2.dilate(erosion,kernel,iterations = 1)
+	erosion = cv2.erode(threshold,kernel,iterations = 3)
+	dilation = cv2.dilate(erosion,kernel,iterations = 2)
 	opening = cv2.morphologyEx(dilation, cv2.MORPH_OPEN, kernel)
 
 	# Detecting contours in image. 
-	contours, _= cv2.findContours(opening, cv2.RETR_TREE, 
+	contours, _= cv2.findContours(th3, cv2.RETR_TREE, 
 								cv2.CHAIN_APPROX_SIMPLE) 
 
 	area2 = 0

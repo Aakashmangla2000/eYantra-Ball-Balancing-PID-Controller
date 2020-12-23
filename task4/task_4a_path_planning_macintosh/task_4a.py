@@ -105,10 +105,13 @@ def find_path(maze_array, start_coord, end_coord):
 	visited = []	#List to keep track of visited cells.
 	queue = []      #Initialize a queue
 	path = []
+	solution = {}
 	visited.append(start_coord)
 	queue.append(start_coord)
 
 	completed = False
+
+	solution[start_coord] = start_coord[0],start_coord[1]
 
 	while queue: 
 		# print(queue)
@@ -126,33 +129,50 @@ def find_path(maze_array, start_coord, end_coord):
 				visited.append((s[0],s[1]-1))
 				queue.append((s[0],s[1]-1))
 				# print('left')
+				cell = (s[0],s[1]-1)
+				solution[cell] = s
 		
 		if (s[0]+1,s[1]) not in visited and s[0]+1 < 10: 
 			if (x == 0 or x == 1 or x == 2 or x == 4 or x == 5 or x == 6 or x == 7 or x == 3): 
 				visited.append((s[0]+1,s[1])) 
 				queue.append((s[0]+1,s[1]))
 				# print('down')
+				cell = (s[0]+1,s[1])
+				solution[cell] = s
 
 		if (s[0],s[1]+1) not in visited and s[1]+1 < 10: 
 			if (x == 0 or x == 1 or x == 2 or x == 8 or x == 9 or x == 10 or x == 11 or x == 3): 
 				visited.append((s[0],s[1]+1))
 				queue.append((s[0],s[1]+1))
 				# print('right')
+				cell = (s[0],s[1]+1)
+				solution[cell] = s
 
 		if (s[0]-1,s[1]) not in visited and s[0]-1 >= 0: 
 			if (x == 0 or x == 1 or x == 4 or x == 5 or x == 8 or x == 9 or x == 12 or x == 13): 
 				visited.append((s[0]-1,s[1]))
 				queue.append((s[0]-1,s[1]))
 				# print('up')
+				cell = (s[0]-1,s[1])
+				solution[cell] = s
 
-	curr = end_coord
-	while(curr != start_coord):
-		path.append(curr)
-		curr = visited.pop()
-	path.append(start_coord)
+	x,y = end_coord[0], end_coord[1]
+	path.append(end_coord)
+	while (x,y) != (start_coord[0], start_coord[1]): 
+		try:
+			path.append(solution[x,y])   
+			x,y = solution[x, y]
+		except:
+			path.pop(0)
+			path = None
+			break
+	
 	######################################################
 	# path = queue
-	path.reverse()
+	try:
+		path.reverse()
+	except:
+		pass
 	return path
 
 
