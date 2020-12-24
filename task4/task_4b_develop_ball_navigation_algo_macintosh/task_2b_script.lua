@@ -5,7 +5,7 @@
 *           		Nirikshak Bot (NB) Theme (eYRC 2020-21)
 *        		===============================================
 *
-*  This Lua script is to implement Task 4B of Nirikshak Bot (NB) Theme (eYRC 2020-21).
+*  This Lua script is to implement Task 2B of Nirikshak Bot (NB) Theme (eYRC 2020-21).
 *  
 *  This software is made available on an "AS IS WHERE IS BASIS".
 *  Licensee/end user indemnifies and will keep e-Yantra indemnified from
@@ -19,10 +19,13 @@
 
 
 --[[
-# Team ID:			[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
-# Filename:			task_4b_lua
-# Functions:        [ Comma separated list of functions in this file ]
+# Team ID:			[ NB_534 ]
+# Author List:		[ Aakash Mangla ]
+# Filename:			task_2b
+# Functions:        createWall, saveTexture, retrieveTexture, reapplyTexture, receiveData, generateHorizontalWalls, 
+#                   generateVerticalWalls, deleteWalls, createMaze, sysCall_init, sysCall_beforeSimulation
+#                   sysCall_afterSimulation, sysCall_cleanup
+# 					[ Comma separated list of functions in this file ]
 # Global variables:	
 # 					[ List of global variables defined in this file ]
 ]]--
@@ -35,9 +38,10 @@
 ##############################################################
 ]]--
 
-base_children_list={} --Do not change or delete this variable
+maze_array = {}
 baseHandle = -1       --Do not change or delete this variable
-
+textureID = -1        --Do not change or delete this variable
+textureData = -1       --Do not change or delete this variable
 --############################################################
 
 --[[
@@ -51,10 +55,8 @@ baseHandle = -1       --Do not change or delete this variable
 
 --[[
 **************************************************************
-  YOU ARE NOT ALLOWED TO MODIFY THIS FUNCTION
-**************************************************************
 	Function Name : createWall()
-	Purpose:
+    Purpose:
 	---
 	Creates a black-colored wall of dimensions 90cm x 10cm x 10cm
 
@@ -65,8 +67,8 @@ baseHandle = -1       --Do not change or delete this variable
 	Returns:
 	---
 	wallObjectHandle : number
-	
-	returns the object handle of the wall created
+    
+    returns the object handle of the created wall
 	
 	Example call:
 	---
@@ -74,17 +76,97 @@ baseHandle = -1       --Do not change or delete this variable
 **************************************************************	
 ]]--
 function createWall()
-	wallObjectHandle = sim.createPureShape(0, 8, {0.09, 0.01, 0.1}, 0.0001, nil)
-	--Refer https://www.coppeliarobotics.com/helpFiles/en/regularApi/simCreatePureShape.htm to understand the parameters passed to this function
-	sim.setShapeColor(wallObjectHandle, nil, sim.colorcomponent_ambient_diffuse, {0, 0, 0})
-	sim.setObjectInt32Parameter(wallObjectHandle,sim.shapeintparam_respondable_mask,65280)
-	--Refer https://www.coppeliarobotics.com/helpFiles/en/apiFunctions.htm#sim.setObjectInt32Parameter to understand the various parameters passed. 	
-	--The walls should only be collidable with the ball and not with each other.
-	--Hence we are enabling only the local respondable masks of the walls created.
-	sim.setObjectSpecialProperty(wallObjectHandle, sim.objectspecialproperty_collidable)
-	--Walls may have to be set as renderable........................... 
-	--This is required to make the wall as collidable
-	return wallObjectHandle
+    wallObjectHandle = sim.createPureShape(0, 26, {0.09, 0.01, 0.1}, 0, nil)
+    sim.setShapeColor(wallObjectHandle, nil, sim.colorcomponent_ambient_diffuse, {0, 0, 0})
+    sim.setObjectSpecialProperty(wallObjectHandle, sim.objectspecialproperty_collidable)
+    sim.setObjectSpecialProperty(wallObjectHandle, sim.objectspecialproperty_measurable)
+    sim.setObjectSpecialProperty(wallObjectHandle, sim.objectspecialproperty_detectable_all)
+    sim.setObjectSpecialProperty(wallObjectHandle, sim.objectspecialproperty_renderable)
+    return wallObjectHandle
+end
+
+--[[
+**************************************************************
+  YOU ARE NOT ALLOWED TO MODIFY OR CALL THIS HELPER FUNCTION
+**************************************************************
+	Function Name : saveTexture()
+    Purpose:
+	---
+	Reads and initializes the applied texture to Base object
+    and saves it to a file.
+
+	Input Arguments:
+	---
+	None
+	
+	Returns:
+	---
+	None
+	
+	Example call:
+	---
+	saveTexture()
+**************************************************************	
+]]--
+function saveTexture()
+    baseHandle = sim.getObjectHandle("Base")
+    textureID = sim.getShapeTextureId(baseHandle)
+    textureData=sim.readTexture(textureID ,0,0,0,0,0)
+    sim.saveImage(textureData, {512,512}, 0, "models/other/base_template.png", -1)
+end
+--[[
+**************************************************************
+  YOU ARE NOT ALLOWED TO MODIFY OR CALL THIS HELPER FUNCTION
+**************************************************************
+	Function Name : retrieveTexture()
+    Purpose:
+	---
+	Loads texture from file.
+
+	Input Arguments:
+	---
+	None
+	
+	Returns:
+	---
+	None
+	
+	Example call:
+	---
+	retrieveTexture()
+**************************************************************	
+]]--
+function retrieveTexture()
+    textureData, resolution = sim.loadImage(0, "models/other/base_template.png") 
+end
+
+--[[
+**************************************************************
+  YOU ARE NOT ALLOWED TO MODIFY OR CALL THIS HELPER FUNCTION
+**************************************************************
+	Function Name : reapplyTexture()
+    Purpose:
+	---
+	Re-applies texture to Base object
+
+	Input Arguments:
+	---
+	None
+	
+	Returns:
+	---
+	None
+	
+	Example call:
+	---
+    reapplyTexture()
+**************************************************************	
+]]--
+function reapplyTexture()
+    plane, textureID = sim.createTexture("", 0, nil, {1.01, 1.01}, nil, 0, {512, 512})
+    sim.writeTexture(textureID, 0, textureData, 0, 0, 0, 0, 0)
+    sim.setShapeTexture(baseHandle, textureID, sim.texturemap_plane, 0, {1.01, 1.01},nil,nil)
+    sim.removeObject(plane)
 end
 
 --############################################################
@@ -92,51 +174,57 @@ end
 --[[
 **************************************************************
 	Function Name : receiveData()
-	Purpose:
+    Purpose:
 	---
 	Receives data via Remote API. This function is called by 
-	simx.callScriptFunction() in the python code (task_2b.py)
+    simx.callScriptFunction() in the python code (task_2b.py)
 
 	Input Arguments:
 	---
 	inInts : Table of Ints
-	inFloats : Table of Floats
-	inStrings : Table of Strings
-	inBuffer : string
+    inFloats : Table of Floats
+    inStrings : Table of Strings
+    inBuffer : string
 	
 	Returns:
 	---
 	inInts : Table of Ints
-	inFloats : Table of Floats
-	inStrings : Table of Strings
-	inBuffer : string
-	
-	These 4 variables represent the data being passed from remote
-	API client(python) to the CoppeliaSim scene
+    inFloats : Table of Floats
+    inStrings : Table of Strings
+    inBuffer : string
+    
+    These 4 variables represent the data being passed from remote
+    API client(python) to the CoppeliaSim scene
 	
 	Example call:
 	---
-	Shall be called from the python script
+	N/A
+    
+    Hint:
+    ---
+    You might want to study this link to understand simx.callScriptFunction()
+    better 
+    https://www.coppeliarobotics.com/helpFiles/en/remoteApiExtension.htm
 **************************************************************	
 ]]--
 function receiveData(inInts,inFloats,inStrings,inBuffer)
 
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-	table.insert(maze_array,inInts)
+    --*******************************************************
+    --               ADD YOUR CODE HERE    
+    table.insert(maze_array,inInts)
     if (table.getn(maze_array) > 10)
     then
         maze_array = {}
         table.insert(maze_array,inInts)
     end
-	--*******************************************************
-	return inInts, inFloats, inStrings, inBuffer
+    --*******************************************************
+    return inInts, inFloats, inStrings, inBuffer
 end
 
 --[[
 **************************************************************
 	Function Name : generateHorizontalWalls()
-	Purpose:
+    Purpose:
 	---
 	Generates all the Horizontal Walls in the scene.
 
@@ -146,7 +234,7 @@ end
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -155,9 +243,9 @@ end
 ]]--
 function generateHorizontalWalls()
 
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-	bs = sim.getObjectHandle('force_sensor_pw_1')
+    --*******************************************************
+    --               ADD YOUR CODE HERE
+    bs = sim.getObjectHandle('Base')
     
     for i = 0,9,1 
     do
@@ -166,18 +254,22 @@ function generateHorizontalWalls()
             st = string.format("H_WallSegment_%dx%d",i+1,j+1)
             ob = createWall()
             ret = sim.setObjectName(ob,st)
-            ret = sim.setObjectOrientation(ob,-1,{0,0,1.5708})
-            ret = sim.setObjectPosition(ob,-1,{-0.5+(0.1*j),-0.45+(0.1*i),0.350})
+            ret = sim.setObjectPosition(ob,-1,{-0.45+(0.1*i),0.5-(0.1*j),0.080})
             ret = sim.setObjectParent(ob,bs,1)
         end 
     end
-	--*******************************************************
+
+    
+
+
+        
+    --*******************************************************
 end
 
 --[[
 **************************************************************
 	Function Name : generateVerticalWalls()
-	Purpose:
+    Purpose:
 	---
 	Generates all the Vertical Walls in the scene.
 
@@ -187,7 +279,7 @@ end
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -196,9 +288,9 @@ end
 ]]--
 function generateVerticalWalls()
 
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-	bs = sim.getObjectHandle('force_sensor_pw_1')
+    --*******************************************************
+    --               ADD YOUR CODE HERE    
+    bs = sim.getObjectHandle('Base')
     
     for i = 0,10,1 
     do
@@ -208,19 +300,24 @@ function generateVerticalWalls()
             ob = createWall()
             st = string.format("V_WallSegment_%dx%d",i+1,j+1)
             ret = sim.setObjectName(ob,st)
-            ret = sim.setObjectPosition(ob,-1,{-0.45+(0.1*j),-0.5+(0.1*i),0.350})
+            ret = sim.setObjectOrientation(ob,-1,{0,0,1.5708})
+            ret = sim.setObjectPosition(ob,-1,{-0.5+(0.1*i),0.45-(0.1*j),0.0800})
             ret = sim.setObjectParent(ob,bs,1)
         end 
     end
-	--*******************************************************
+    
+
+
+        
+    --*******************************************************
 end
 
 --[[
 **************************************************************
 	Function Name : deleteWalls()
-	Purpose:
+    Purpose:
 	---
-	Deletes all the grouped walls in the given scene
+	Deletes all the walls in the given scene
 
 	Input Arguments:
 	---
@@ -228,7 +325,7 @@ end
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -237,48 +334,49 @@ end
 ]]--
 function deleteWalls()
 
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-    print('deleting')
-	-- for i=1,11,1
-    -- do
-    --     for j=1,10,1
-    --     do
-    --         ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',i,j))
-    --         if (ob ~= -1)
-    --         then
-    --             ret = sim.removeObject(ob)
-    --         end
-    --     end
-    -- end
+    --*******************************************************
+    --               ADD YOUR CODE HERE
+    
+    for i=1,11,1
+    do
+        for j=1,10,1
+        do
+            ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',i,j))
+            if (ob ~= -1)
+            then
+                ret = sim.removeObject(ob)
+            end
+        end
+    end
 
-    -- for i=1,10,1
-    -- do
-    --     for j=1,11,1
-    --     do
-    --         ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',i,j))
-    --         if (ob ~= -1)
-    --         then
-    --             ret = sim.removeObject(ob)
-    --         end
-    --     end
-    -- end
-    objectHandle=sim.getObjectHandle('walls_1')
-    ret = sim.removeObject(objectHandle)
-	--*******************************************************
+    for i=1,10,1
+    do
+        for j=1,11,1
+        do
+            ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',i,j))
+            if (ob ~= -1)
+            then
+                ret = sim.removeObject(ob)
+            end
+        end
+    end
+
+
+        
+    --*******************************************************
 end
 
 
 --[[
 **************************************************************
   YOU CAN DEFINE YOUR OWN INPUT AND OUTPUT PARAMETERS FOR THIS
-						  FUNCTION
+                          FUNCTION
 **************************************************************
 	Function Name : createMaze()
-	Purpose:
+    Purpose:
 	---
 	Creates the maze in the given scene by deleting specific 
-	horizontal and vertical walls
+    horizontal and vertical walls
 
 	Input Arguments:
 	---
@@ -286,7 +384,7 @@ end
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -294,11 +392,10 @@ end
 **************************************************************	
 ]]--
 function createMaze()
-	
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-    print(maze_array)
-	for i=1,10,1
+    
+    --*******************************************************
+    --               ADD YOUR CODE HERE
+    for i=1,10,1
     do
         for j=1,10,1
         do
@@ -512,156 +609,28 @@ function createMaze()
         end
          
      end
-	--*******************************************************
-end
---[[
-	Function Name : groupWalls()
-	Purpose:
-	---
-	Groups the various walls in the scene to one object.
-	The name of the new grouped object should be set as 'walls_1'.
 
-	Input Arguments:
-	---
-	None
-	
-	Returns:
-	---
-	None
-	
-	Example call:
-	---
-	groupWalls()
-**************************************************************	
-]]--
 
-function groupWalls()
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-	wlls = {}
-	for i=1,11,1
-    do
-        for j=1,10,1
-        do
-            ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',i,j))
-            if (ob ~= -1)
-			then
-				table.insert(wlls,ob)
-                -- ret = sim.removeObject(ob)
-            end
-        end
-    end
-
-    for i=1,10,1
-    do
-        for j=1,11,1
-        do
-            ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',i,j))
-            if (ob ~= -1)
-			then
-				table.insert(wlls,ob)
-                -- ret = sim.removeObject(ob)
-            end
-        end
-    end
-	shapeHandle=sim.groupShapes(wlls,false)
-	sim.setObjectName(shapeHandle,'walls_1')
-	--*******************************************************
+        
+    --*******************************************************
 end
 
---[[
-	Function Name : addToCollection()
-	Purpose:
-	---
-	Adds the 'walls_1' grouped object to the collection 'colliding_objects'.  
 
-	Input Arguments:
-	---
-	None
-	
-	Returns:
-	---
-	None
-	
-	Example call:
-	---
-	addToCollection()
-**************************************************************	
-]]--
-
-function addToCollection()
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-	collectionHandle=sim.getCollectionHandle('colliding_objects')
-	objectHandle=sim.getObjectHandle('walls_1')
-	sim.addObjectToCollection(collectionHandle, objectHandle, sim.handle_single,0)
-	-- the type of object (or group of objects) to add. Following are allowed values: sim.handle_single (for a single object), sim.handle_all (for all objects in the scene), sim.handle_tree (for a tree of objects), or sim.handle_chain (for a chain of objects (i.e. an inverted tree)).
-	--*******************************************************
-end
-
---[[
-	******************************************************************************
-			YOU ARE ALLOWED TO MODIFY THIS FUNCTION DEPENDING ON YOUR PATH. 
-	******************************************************************************
-	Function Name : drawPath(inInts,path,inStrings,inBuffer)
-	Purpose:
-	---
-	Builds blue coloured lines in the scene according to the
-	path generated from the python file. 
-
-	Input Arguments:
-	---
-	inInts : Table of Ints
-	inFloats : Table of Floats (containing the path generated)
-	inStrings : Table of Strings
-	inBuffer : string
-	
-	Returns:
-	---
-	inInts : Table of Ints
-	inFloats : Table of Floats
-	inStrings : Table of Strings
-	inBuffer : string
-	
-	Example call:
-	---
-	Shall be called from the python script
-**************************************************************	
-]]--
-function drawPath(inInts,path,inStrings,inBuffer)
-    wallsGroupHandle=sim.getObjectHandle('walls_1')
-	posTable=sim.getObjectPosition(wallsGroupHandle,-1)
-	print('=========================================')
-	print('Path received is as follows: ')
-	print(path)
-	if not lineContainer then
-		_lineContainer=sim.addDrawingObject(sim.drawing_lines,1,0,wallsGroupHandle,99999,{0.2,0.2,1})
-		sim.addDrawingObjectItem(_lineContainer,nil)
-		if path then
-			local pc=#path/2
-			for i=1,pc-1,1 do
-				lineDat={path[(i-1)*2+1],path[(i-1)*2+2],posTable[3]-0.03,path[(i)*2+1],path[(i)*2+2],posTable[3]-0.03}
-				sim.addDrawingObjectItem(_lineContainer,lineDat)
-			end
-		end
-	end
-	return inInts, path, inStrings, inBuffer
-end
 
 --[[
 **************************************************************
 	Function Name : sysCall_init()
-	Purpose:
+    Purpose:
 	---
 	Can be used for initialization of parameters
-	
+    
 	Input Arguments:
 	---
 	None
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -669,32 +638,32 @@ end
 **************************************************************	
 ]]--
 function sysCall_init()
-	--*******************************************************
-	--               ADD YOUR CODE HERE
-    maze_array = {}
-    ballHandle=sim.getObjectHandle('green_ball_1')
-    ret = sim.setObjectPosition(ballHandle,-1,{-0.429,-0.049,0.341})
-	--*******************************************************
+
+    if pcall(saveTexture) then -- Do not delete or modify this section
+        print("Successfully saved texture")
+    else
+        print("Texture does not exist. Importing texture from file..")
+        retrieveTexture()
+        reapplyTexture()
+    end     
 end
 
 --[[
 **************************************************************
-		YOU ARE NOT ALLOWED TO MODIFY THIS FUNCTION.
-		YOU CAN DEFINE YOUR OWN INPUT AND OUTPUT 
-		PARAMETERS ONLY FOR CREATEMAZE() FUNCTION
+        YOU ARE NOT ALLOWED TO MODIFY THIS FUNCTION. 
 **************************************************************
 	Function Name : sysCall_beforeSimulation()
-	Purpose:
+    Purpose:
 	---
 	This is executed before simulation starts
-	
+    
 	Input Arguments:
 	---
 	None
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -702,30 +671,30 @@ end
 **************************************************************	
 ]]--
 function sysCall_beforeSimulation()
-	
-	generateHorizontalWalls()
-	generateVerticalWalls()
-	createMaze()--You can define your own input and output parameters only for this function
-	groupWalls()
-	addToCollection()
+    
+    sim.setShapeTexture(baseHandle, -1, sim.texturemap_plane, 0, {1.01, 1.01},nil,nil) -- Do not delete or modify this line
+    
+    generateHorizontalWalls()
+    generateVerticalWalls()
+    createMaze()
 end
 
 --[[
 **************************************************************
-		YOU ARE NOT ALLOWED TO MODIFY THIS FUNCTION. 
+        YOU ARE NOT ALLOWED TO MODIFY THIS FUNCTION. 
 **************************************************************
 	Function Name : sysCall_afterSimulation()
-	Purpose:
+    Purpose:
 	---
 	This is executed after simulation ends
-	
+    
 	Input Arguments:
 	---
 	None
 	
 	Returns:
 	---
-	None
+    None
 	
 	Example call:
 	---
@@ -733,16 +702,17 @@ end
 **************************************************************	
 ]]--
 function sysCall_afterSimulation()
-	-- is executed after a simulation ends
-	deleteWalls()
-    evaluation_screen_respondable=sim.getObjectHandle('evaluation_screen_respondable@silentError')
-    if(evaluation_screen_respondable~=-1) then
-        sim.removeModel(evaluation_screen_respondable)
-    end
+    -- is executed after a simulation ends
+    deleteWalls()
+    reapplyTexture() -- Do not delete or modify this line
 end
 
 function sysCall_cleanup()
-	-- do some clean-up here
+    -- do some clean-up here
 end
 
 -- See the user manual or the available code snippets for additional callback functions and details
+
+
+
+

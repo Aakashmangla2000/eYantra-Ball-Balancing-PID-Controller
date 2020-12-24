@@ -123,6 +123,7 @@ function receiveData(inInts,inFloats,inStrings,inBuffer)
 
 	--*******************************************************
 	--               ADD YOUR CODE HERE
+    print(maze_array)
 	table.insert(maze_array,inInts)
     if (table.getn(maze_array) > 10)
     then
@@ -166,8 +167,7 @@ function generateHorizontalWalls()
             st = string.format("H_WallSegment_%dx%d",i+1,j+1)
             ob = createWall()
             ret = sim.setObjectName(ob,st)
-            ret = sim.setObjectOrientation(ob,-1,{0,0,1.5708})
-            ret = sim.setObjectPosition(ob,-1,{-0.5+(0.1*j),-0.45+(0.1*i),0.350})
+            ret = sim.setObjectPosition(ob,-1,{-0.45+(0.1*i),0.5-(0.1*j),0.350})
             ret = sim.setObjectParent(ob,bs,1)
         end 
     end
@@ -208,7 +208,8 @@ function generateVerticalWalls()
             ob = createWall()
             st = string.format("V_WallSegment_%dx%d",i+1,j+1)
             ret = sim.setObjectName(ob,st)
-            ret = sim.setObjectPosition(ob,-1,{-0.45+(0.1*j),-0.5+(0.1*i),0.350})
+            ret = sim.setObjectOrientation(ob,-1,{0,0,1.5708})
+            ret = sim.setObjectPosition(ob,-1,{-0.5+(0.1*i),0.45-(0.1*j),0.350})
             ret = sim.setObjectParent(ob,bs,1)
         end 
     end
@@ -239,32 +240,29 @@ function deleteWalls()
 
 	--*******************************************************
 	--               ADD YOUR CODE HERE
-    print('deleting')
-	-- for i=1,11,1
-    -- do
-    --     for j=1,10,1
-    --     do
-    --         ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',i,j))
-    --         if (ob ~= -1)
-    --         then
-    --             ret = sim.removeObject(ob)
-    --         end
-    --     end
-    -- end
+	for i=1,11,1
+    do
+        for j=1,10,1
+        do
+            ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',i,j))
+            if (ob ~= -1)
+            then
+                ret = sim.removeObject(ob)
+            end
+        end
+    end
 
-    -- for i=1,10,1
-    -- do
-    --     for j=1,11,1
-    --     do
-    --         ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',i,j))
-    --         if (ob ~= -1)
-    --         then
-    --             ret = sim.removeObject(ob)
-    --         end
-    --     end
-    -- end
-    objectHandle=sim.getObjectHandle('walls_1')
-    ret = sim.removeObject(objectHandle)
+    for i=1,10,1
+    do
+        for j=1,11,1
+        do
+            ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',i,j))
+            if (ob ~= -1)
+            then
+                ret = sim.removeObject(ob)
+            end
+        end
+    end
 	--*******************************************************
 end
 
@@ -297,221 +295,7 @@ function createMaze()
 	
 	--*******************************************************
 	--               ADD YOUR CODE HERE
-    print(maze_array)
-	for i=1,10,1
-    do
-        for j=1,10,1
-        do
-            if (maze_array[i][j] == 0)
-            then
-                -- string.format("V_WallSegment_%dx%d",i+1,j+1)
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
 
-            elseif (maze_array[i][j] == 1)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-
-            elseif (maze_array[i][j] == 2)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-
-            elseif (maze_array[i][j] == 3)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-
-            elseif (maze_array[i][j] == 4)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 5)
-            then
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 6)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                -- print(ob)
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 7)
-            then
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i+1))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 8)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 9)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 10)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 11)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j+1,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 12)
-            then
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-                
-            elseif (maze_array[i][j] == 13)
-            then
-                ob = sim.getObjectHandle(string.format('H_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-
-            else
-                ob = sim.getObjectHandle(string.format('V_WallSegment_%dx%d@silentError',j,i))
-                if (ob ~= -1)
-                then
-                    ret = sim.removeObject(ob)
-                end
-            end
-            
-        end
-         
-     end
 	--*******************************************************
 end
 --[[
@@ -629,7 +413,6 @@ end
 **************************************************************	
 ]]--
 function drawPath(inInts,path,inStrings,inBuffer)
-    wallsGroupHandle=sim.getObjectHandle('walls_1')
 	posTable=sim.getObjectPosition(wallsGroupHandle,-1)
 	print('=========================================')
 	print('Path received is as follows: ')
@@ -671,9 +454,7 @@ end
 function sysCall_init()
 	--*******************************************************
 	--               ADD YOUR CODE HERE
-    maze_array = {}
-    ballHandle=sim.getObjectHandle('green_ball_1')
-    ret = sim.setObjectPosition(ballHandle,-1,{-0.429,-0.049,0.341})
+ 
 	--*******************************************************
 end
 

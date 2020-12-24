@@ -161,8 +161,6 @@ end_coord = (9,5)
 # You can add your global variables here
 ##############################################################
 
-
-
 ##############################################################
 
 
@@ -172,10 +170,111 @@ end_coord = (9,5)
 ## readable and easy to understand.                         ##
 ##############################################################
 
+def run_func(tt): 
+	init_simulation_time = 0
+	curr_simulation_time = 0
+	return_code_signal,init_simulation_time_string=sim.simxGetStringSignal(client_id,'time',sim.simx_opmode_streaming)
 
+	if(return_code_signal==0):
+		init_simulation_time=float(init_simulation_time_string)
 
+	# Running the coppeliasim simulation for 15 seconds
+	while(curr_simulation_time - init_simulation_time <=tt):
+		
+		return_code_signal,curr_simulation_time_string=sim.simxGetStringSignal(client_id,'time',sim.simx_opmode_buffer)
+		
+		if(return_code_signal == 0):
+			curr_simulation_time=float(curr_simulation_time_string)
 
+		try:
+			vision_sensor_image, image_resolution, return_code = task_2a.get_vision_sensor_image(task_3.vision_sensor_handle)
 
+			if ((return_code == sim.simx_return_ok) and (len(image_resolution) == 2) and (len(vision_sensor_image) > 0)):
+				# print('\nImage captured from Vision Sensor in CoppeliaSim successfully!')
+
+				# Get the transformed vision sensor image captured in correct format
+				try:
+					transformed_image = task_2a.transform_vision_sensor_image(vision_sensor_image, image_resolution)
+
+					if (type(transformed_image) is np.ndarray):
+
+						# cv2.imshow('transformed image', transformed_image)
+						# cv2.waitKey(0)
+						# cv2.destroyAllWindows()
+
+						# Get the resultant warped transformed vision sensor image after applying Perspective Transform
+						try:
+							warped_img = task_1b.applyPerspectiveTransform(transformed_image)
+							
+							if (type(warped_img) is np.ndarray):
+								
+								# Get the 'shapes' dictionary by passing the 'warped_img' to scan_image function
+								try:
+									shapes = task_1a_part1.scan_image(warped_img)
+
+									if (type(shapes) is dict and shapes!={}):
+										# print('\nShapes detected by Vision Sensor are: ')
+										# print(shapes)
+										
+										# Storing the detected x and y centroid in center_x and center_y variable repectively
+										center_x = shapes['Circle'][1]
+										center_y = shapes['Circle'][2]
+
+									elif(type(shapes) is not dict):
+										print('\n[ERROR] scan_image function returned a ' + str(type(shapes)) + ' instead of a dictionary.')
+										print('Stop the CoppeliaSim simulation manually.')
+										print()
+										sys.exit()
+								
+								except Exception:
+									print('\n[ERROR] Your scan_image function in task_1a_part1.py throwed an Exception. Kindly debug your code!')
+									print('Stop the CoppeliaSim simulation manually.\n')
+									traceback.print_exc(file=sys.stdout)
+									print()
+									sys.exit()
+							
+							else:
+								print('\n[ERROR] applyPerspectiveTransform function is not configured correctly, check the code.')
+								print('Stop the CoppeliaSim simulation manually.')
+								print()
+								sys.exit()
+						
+						except Exception:
+							print('\n[ERROR] Your applyPerspectiveTransform function in task_1b.py throwed an Exception. Kindly debug your code!')
+							print('Stop the CoppeliaSim simulation manually.\n')
+							traceback.print_exc(file=sys.stdout)
+							print()
+							sys.exit()
+
+					else:
+						print('\n[ERROR] transform_vision_sensor_image function in task_2a.py is not configured correctly, check the code.')
+						print('Stop the CoppeliaSim simulation manually.')
+						print()
+						sys.exit()
+
+				except Exception:
+					print('\n[ERROR] Your transform_vision_sensor_image function in task_2a.py throwed an Exception. Kindly debug your code!')
+					print('Stop the CoppeliaSim simulation manually.\n')
+					traceback.print_exc(file=sys.stdout)
+					print()
+					sys.exit()
+			
+			try:
+				task_3.control_logic(center_x,center_y)
+			
+			except:
+				print('\n[ERROR] Your control_logic function throwed an Exception. Kindly debug your code!')
+				print('Stop the CoppeliaSim simulation manually.\n')
+				traceback.print_exc(file=sys.stdout)
+				print()
+				sys.exit()
+
+		except Exception:
+			print('\n[ERROR] Your get_vision_sensor_image function in task_2a.py throwed an Exception. Kindly debug your code!')
+			print('Stop the CoppeliaSim simulation manually.\n')
+			traceback.print_exc(file=sys.stdout)
+			print()
+			sys.exit()
 
 ##############################################################
 
@@ -419,8 +518,11 @@ def convert_path_to_pixels(path):
 	"""
 	##############	ADD YOUR CODE HERE	##############
 
+	pixel_path = []
 
-	
+	for i in path: 
+		pixel_path.append(list((((i[1]+1)*128)-64,((i[0]+1)*128)-64)))
+
 	##################################################	
 	return pixel_path
 
@@ -450,8 +552,21 @@ def traverse_path(pixel_path):
 
 	"""
 	##############	ADD YOUR CODE HERE	##############
-
-
+	global setpoint
+	# task_3.setpoint = [((start_coord[1]+1)*128)-64,((start_coord[0]+1)*128)-64]
+	# task_3.setpoint = [576,0]
+	# run_func(5)
+	for i in pixel_path: 
+		# print(i,'i')
+		if(i[1] < 270): 
+			task_3.setpoint = [i[0],i[1]-160]
+		else: 
+			task_3.setpoint = [i[0],i[1]-200]
+		# setpoint = [576, 64]
+		run_func(3)
+	# task_3.control_logic()
+	task_3.setpoint = [704, 1016]
+	run_func(10)
 
 	##################################################
 
