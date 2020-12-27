@@ -17,12 +17,12 @@
 *****************************************************************************************
 '''
 
-# Team ID:          [ Team-ID ]
-# Author List:      [ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:          [ NB_534 ]
+# Author List:      [ Aakash Mangla ]
 # Filename:         task_4b.py
 # Functions:        calculate_path_from_maze_image, send_data_to_draw_path, 
 # 					convert_path_to_pixels, traverse_path
-#                   [ Comma separated list of functions in this file ]
+#                   [ run_func ]
 # Global variables: client_id, setpoint, start_coord, end_coord
 # 					[ List of global variables defined in this file ]
 
@@ -560,13 +560,15 @@ def traverse_path(pixel_path):
 		# print(i,'i')
 		if(i[1] < 270): 
 			task_3.setpoint = [i[0],i[1]-160]
+		elif(i[1] > 270 and i[1] < 330): 
+			task_3.setpoint = [i[0],i[1]-150]
 		else: 
 			task_3.setpoint = [i[0],i[1]-200]
 		# setpoint = [576, 64]
-		run_func(3)
+		run_func(6)
 	# task_3.control_logic()
-	task_3.setpoint = [704, 1016]
-	run_func(10)
+	# task_3.setpoint = [704, 1016]
+	# run_func(10)
 
 	##################################################
 

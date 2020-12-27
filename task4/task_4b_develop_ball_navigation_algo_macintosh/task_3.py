@@ -68,11 +68,11 @@ rj1,rj2 = 0,0
 
 kpx = 0.055
 kix = 0.0
-kdx = 0.125
+kdx = 0.115
 
 kpy = 0.055
 kiy = 0.0
-kdy = 0.125
+kdy = 0.115
 
 previous_error_x=0
 previous_error_y=0
