@@ -361,6 +361,8 @@ function deleteWalls()
         end
     end
 
+    
+
 
         
     --*******************************************************
@@ -610,7 +612,21 @@ function createMaze()
          
      end
 
-
+    ob = sim.getObjectHandle('H_WallSegment_5x11@silentError')
+    if (ob ~= -1)
+    then
+        ret = sim.removeObject(ob)
+    end
+    ob = sim.getObjectHandle('V_WallSegment_11x6@silentError')
+    if (ob ~= -1)
+    then
+        ret = sim.removeObject(ob)
+    end
+    ob = sim.getObjectHandle('V_WallSegment_1x5@silentError')
+    if (ob ~= -1)
+    then
+        ret = sim.removeObject(ob)
+    end
         
     --*******************************************************
 end
